@@ -1,0 +1,47 @@
+﻿@using MedinovaMPA101.ViewModels.TeamViewModels
+@model List<TeamGetVM>
+<div class="container">
+    <div class="row">
+        <div class="col-2">
+            <a class="btn btn-success" asp-action="Create" asp-controller="Team">Create </a>
+            
+
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">ImagePath</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Position</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var team in Model)
+                {
+                    <tr>
+                        <th scope="row">@team.Id</th>
+                        <td>
+                            <img  src="~/assets/img/@team.ImagePath"/>
+                        </td>
+                        <td>@team.Name</td>
+                        <td>@team.Position</td>
+                        <td>@team.Description</td>
+                        <td>
+
+                            <a asp-action="Update" asp-controller="Team" asp-route-id="@team.Id" class="btn btn-warning">Update</a>
+                            <a asp-action="Delete" asp-controller="Team" asp-route-id="@team.Id" class="btn btn-danger">Update</a>
+
+                        </td>
+                    </tr>
+
+                }
+
+
+            </tbody>
+        </table>
+    </div>
+</div>
