@@ -10,7 +10,7 @@ namespace MedinovaMPA101.ViewModels.TeamViewModels
         public string Position { get; set; } = string.Empty;
         [Required, MaxLength(1024)]
         public string Description { get; set; } = string.Empty;
-        [Required, MaxLength(1024)]
-        public IFormFile Image { get; set; } = null!;
+        [Required]
+        public IFormFile Image { get; set; } 
     }
 }

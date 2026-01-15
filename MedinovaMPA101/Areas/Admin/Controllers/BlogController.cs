@@ -1,20 +1,21 @@
 ﻿using MedinovaMPA101.Contexts;
 using MedinovaMPA101.Models;
+using MedinovaMPA101.ViewModels.BlogViewModels;
 using MedinovaMPA101.ViewModels.TeamViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace MedinovaMPA101.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class TeamController : Controller
+    public class BlogController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly string _folderPath;
 
-        public TeamController(AppDbContext context, IWebHostEnvironment environment)
+        public BlogController(AppDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
             _environment = environment;
@@ -23,13 +24,13 @@ namespace MedinovaMPA101.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var teams = await _context.Teams.Select(x=>new TeamGetVM()
+            var teams = await _context.Blogs.Select(x=>new BlogGetVM()
             {
                 Id=x.Id,
+                Text=x.Text,
+                Description=x.Description,
                 ImagePath=x.ImagePath,
-                Name=x.Name,
-                Position = x.Position,
-                Description =x.Description,
+                TeamName=x.Team.Name
             }).ToListAsync();
             return View(teams);
         }
@@ -37,22 +38,32 @@ namespace MedinovaMPA101.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            //var teams = await _context.Teams.Select(x => new TeamGetVM()
-            //{
-            //    Id = x.Id,
-            //    ImagePath = x.ImagePath,
-            //    Name = x.Name,
-            //    Position = x.Position,
-            //    Description = x.Description,
-            //}).ToListAsync();
+            var teams = await _context.Teams.Select(x => new SelectListItem()
+            {
+               Value=x.Id.ToString(),
+               Text=x.Name
+            }).ToListAsync();
+            ViewBag.Teams = teams;
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(TeamCreateVM vm)
+        public async Task<IActionResult> Create(BlogCreateVM vm)
         {
+            var teams = await _context.Teams.Select(x => new SelectListItem()
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name
+            }).ToListAsync();
+            ViewBag.Teams = teams;
             if (!ModelState.IsValid)
             {
+                return View(vm);
+            }
+            var isExistTeam = await _context.Teams.AnyAsync(x => x.Id == vm.TeamId);
+            if (!isExistTeam)
+            {
+                ModelState.AddModelError("TeamId", "Bele bir doctor movcud deyil");
                 return View(vm);
             }
             if (vm.Image.Length > 2 * 1024 * 1024)
@@ -65,39 +76,31 @@ namespace MedinovaMPA101.Areas.Admin.Controllers
                 ModelState.AddModelError("Image", "Image must be image format");
                 return View(vm);
             }
-
             string uniqueFileName = Guid.NewGuid().ToString() + vm.Image.FileName;
             string path = Path.Combine(_folderPath, uniqueFileName);
             using FileStream stream = new(path, FileMode.Create);
             await vm.Image.CopyToAsync(stream);
-
-            Team teams = new()
-
+            Blog blog = new()
             {
-                
-                Name = vm.Name,
-                Position = vm.Position,
-                Description = vm.Description,
                 ImagePath = uniqueFileName,
-
-
+                Text = vm.Text,
+                Description = vm.Description,
+                TeamId=vm.TeamId
             };
-
-            await _context.Teams.AddAsync(teams);
+            await _context.Blogs.AddAsync(blog);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-
         }
 
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            var teams = await _context.Teams.FindAsync(id);
-            if (teams is null)
+            var blogs = await _context.Blogs.FindAsync(id);
+            if (blogs is null)
                 return NotFound();
-            _context.Teams.Remove(teams);
+            _context.Blogs.Remove(blogs);
             await _context.SaveChangesAsync();
-            string deletedImagePath = Path.Combine(_folderPath, teams.ImagePath);
+            string deletedImagePath = Path.Combine(_folderPath, blogs.ImagePath);
             if (System.IO.File.Exists(deletedImagePath))
                 System.IO.File.Delete(deletedImagePath);
             return RedirectToAction(nameof(Index));
@@ -108,20 +111,30 @@ namespace MedinovaMPA101.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Update(int id)
         {
-            var teams = await _context.Teams.FindAsync(id);
-            if (teams is null)
+
+            var blogs = await _context.Blogs.FindAsync(id);
+            if (blogs is null)
                 return NotFound();
-            TeamUpdateVM vm = new()
+            BlogUpdateVM vm = new()
             {
-                Name = teams.Name,
-                Position = teams.Position,
-                Description = teams.Description
+                Id=blogs.Id,
+                Text = blogs.Text,
+                Description = blogs.Description,
+                TeamId=blogs.TeamId
+               
             };
+            var teams = await _context.Teams.Select(x => new SelectListItem()
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name,
+                
+            }).ToListAsync();
+            ViewBag.Teams = teams;
             return View(vm);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Update(TeamUpdateVM vm)
+        public async Task<IActionResult> Update(BlogUpdateVM vm)
         {
             if (!ModelState.IsValid)
             {
@@ -137,29 +150,30 @@ namespace MedinovaMPA101.Areas.Admin.Controllers
                 ModelState.AddModelError("Image", "Image must be image format");
                 return View(vm);
             }
-            var isExistTeam = await _context.Teams.FindAsync(vm.Id);
-            if (isExistTeam is null)
+            var isExistBlog = await _context.Blogs.FindAsync(vm.Id);
+            if (isExistBlog is null)
                 return BadRequest();
-            isExistTeam.Name = vm.Name;
-            isExistTeam.Position = vm.Position;
-            isExistTeam.Description = vm.Description;
+            isExistBlog.Text = vm.Text;
+            isExistBlog.Description = vm.Description;
+            isExistBlog.TeamId = vm.TeamId;
 
             string uniqueFileName = Guid.NewGuid().ToString() + vm.Image.FileName;
             string newPath = Path.Combine(_folderPath, uniqueFileName);
             using FileStream stream = new(newPath, FileMode.Create);
             await vm.Image.CopyToAsync(stream);
 
-            string oldImagePath = Path.Combine(_folderPath, isExistTeam.ImagePath);
+            string oldImagePath = Path.Combine(_folderPath, isExistBlog.ImagePath);
 
             if (System.IO.File.Exists(oldImagePath))
                 System.IO.File.Delete(oldImagePath);
-            isExistTeam.ImagePath = uniqueFileName;
-            _context.Teams.Update(isExistTeam);
+            isExistBlog.ImagePath = uniqueFileName;
+            _context.Blogs.Update(isExistBlog);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
 
-            
+
         }
 
     }
+
 }

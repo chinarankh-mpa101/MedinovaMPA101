@@ -1,0 +1,47 @@
+﻿@using MedinovaMPA101.ViewModels.BlogViewModels
+@model List<BlogGetVM>
+<div class="container">
+    <div class="row">
+        <div class="col-2">
+            <a class="btn btn-success" asp-action="Create" asp-controller="Blog">Create </a>
+
+
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">ImagePath</th>
+                    <th scope="col">Text</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Team Name</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var blog in Model)
+                {
+                    <tr>
+                        <th scope="row">@blog.Id</th>
+                        <td>
+                            <img src="~/assets/img/@blog.ImagePath" />
+                        </td>
+                        <td>@blog.Text</td>
+                        <td>@blog.Description</td>
+                        <td>@blog.TeamName</td>
+                        <td>
+
+                            <a asp-action="Update" asp-controller="Blog" asp-route-id="@blog.Id" class="btn btn-warning">Update</a>
+                            <a asp-action="Delete" asp-controller="Blog" asp-route-id="@blog.Id" class="btn btn-danger">Delete</a>
+
+                        </td>
+                    </tr>
+
+                }
+
+
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MedinovaMPA101.ViewModels.TeamViewModels
+namespace MedinovaMPA101.ViewModels.BlogViewModels
 {
-    public class TeamUpdateVM
+    public class BlogUpdateVM
     {
         public int Id { get; set; }
         [Required, MaxLength(256)]
-        public string Name { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
         [Required, MaxLength(256)]
-        public string Position { get; set; } = string.Empty;
-        [Required, MaxLength(1024)]
         public string Description { get; set; } = string.Empty;
+        public int TeamId { get; set; } 
+
         [Required]
         public IFormFile Image { get; set; } = null!;
     }
